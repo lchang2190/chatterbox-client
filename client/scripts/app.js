@@ -4,7 +4,7 @@ class App {
   constructor() {
     this.server = 'http://parse.sfm6.hackreactor.com/chatterbox/classes/messages';
     this.rooms = [];
-    this.messages = {};
+    this.latestPull;
   }
 
   init() {
@@ -30,15 +30,26 @@ class App {
   }
 
   fetch(roomname = 'default') {
+    var dataRestrictions = {
+      'limit': 100, 
+      'order': '-createdAt',
+    };
+
+    // var data2 = {
+    //   'limit': 100, 
+    //   'order': '-createdAt',
+    //   'where': {"createdAt":{"$gte":{"__type":"Date","iso":"2017-12-09T05:31:15.126Z"}}}
+    // }
+    
     $.ajax({
       context: this,
       // This is the url you should use to communicate with the parse API server.
-      url: 'http://parse.sfm6.hackreactor.com/chatterbox/classes/messages?order=-createdAt',
+      url: 'http://parse.sfm6.hackreactor.com/chatterbox/classes/messages',
       type: 'GET',
-      //data: JSON.stringify(message),
+      data: dataRestrictions,
       contentType: 'application/json',
       success: function (data) {
-        console.log(data);
+        this.latestPull = data.results[0].createdAt;
         var allmessage = data.results;
         for (var i = 0; i < allmessage.length; i++) {
           var messageObject = allmessage[i];
@@ -82,9 +93,6 @@ class App {
     var add = '<p>' + user + '<span>: ' + this.escapeHtml(message.text) + '</span></p>';
     $('#chats').append(add);
     // $('#main').append(user);
-
-    // add any new room-names to our roomname array
-    // debugger;  
 
         
     $('#main').on('click', '.username', function(event) {
