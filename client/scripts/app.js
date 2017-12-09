@@ -35,11 +35,11 @@ class App {
       'order': '-createdAt',
     };
 
-    // var data2 = {
-    //   'limit': 100, 
-    //   'order': '-createdAt',
-    //   'where': {"createdAt":{"$gte":{"__type":"Date","iso":"2017-12-09T05:31:15.126Z"}}}
-    // }
+    var data2 = {
+      'limit': 100, 
+      'order': '-createdAt',
+      'where': {"createdAt":{"$gte":{"__type":"Date","iso":"2017-12-09T05:31:15.126Z"}}}
+    }
     
     $.ajax({
       context: this,
@@ -51,12 +51,14 @@ class App {
       success: function (data) {
         var allmessage = data.results;
         // if the user has not selected a room, default into the room of the first message
-        if (!roomname) {
-          roomname = allmessage[0].roomname;
-          $("#roomList").val(roomname);
-        }
+        // this.newestRenderedMessageTimeStamp = allmessage[0].createdAt;
+        console.log('fetch initated', allmessage.length); 
+        for (var i = 0; i < allmessage.length; i++) {  
+          if (!roomname && allmessage[i].roomname) {
+            roomname = this.escapeHtml(allmessage[i].roomname);
+            $("#roomList").val(roomname);            
+          }
 
-        for (var i = 0; i < allmessage.length; i++) {        
           var messageObject = allmessage[i];
 
           if (messageObject.roomname === roomname) {
@@ -135,6 +137,11 @@ class App {
       roomname: roomname
     };
     this.send(message);
+  }
+
+  refresh(roomname) {
+    app.clearMessages();
+    app.fetch(roomname);
   }
 }
 
