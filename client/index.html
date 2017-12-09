@@ -10,14 +10,14 @@
     <script src="bower_components/underscore/underscore.js"></script>
     <script>
       // YOU DO NOT NEED TO EDIT THIS CODE
-      // if (!/(&|\?)username=/.test(window.location.search)) {
-      //   var newSearch = window.location.search;
-      //   if (newSearch !== '' & newSearch !== '?') {
-      //     newSearch += '&';
-      //   }
-      //   newSearch += 'username=' + (prompt('What is your name?') || 'anonymous');
-      //   window.location.search = newSearch;
-      // }
+      if (!/(&|\?)username=/.test(window.location.search)) {
+        var newSearch = window.location.search;
+        if (newSearch !== '' & newSearch !== '?') {
+          newSearch += '&';
+        }
+        newSearch += 'username=' + (prompt('What is your name?') || 'anonymous');
+        window.location.search = newSearch;
+      }
     </script>
     <!-- your scripts -->
     <script src="env/config.js"></script>
@@ -26,10 +26,14 @@
   <body>
     <div id="main">
       <h1>chatterbox</h1>
+      <select id="roomList">
+        <option value ="default">Select A Room</option>
+      </select>
       <!-- Your HTML goes here! -->
     </div>
     <div id="chats"></div>
-    <select id="roomList"></select>
+
+
     <form name='chatMessageForm'>
       <input type="text" id='message'>
       <input type="button" id='send' class='submit' value="chat">
@@ -39,13 +43,28 @@
     $(document).ready(function() {
       app.init();
       app.fetch();
+      // setInterval(app.fetch.bind(app), 2000);
+      var selectedRoom;
+
+      $("#roomList").change(function() {
+        selectedRoom = $("#roomList").find(":selected").text();
+        $('#chats').empty(); 
+        app.fetch(selectedRoom);
+        // Clear the room of messages
+        
+      });
       
       // Handle user submission of messages
       $("#send").click(function() {
-        // debugger;
+        var username = window.location.search.slice(10);
         var clientMessage = $('#message').val();
-        app.handleSubmit();
-        $('#message').val('');
+        if (!selectedRoom) {
+          alert('pick a room');
+        } else {
+          app.handleSubmit(username, clientMessage, selectedRoom);
+          $('#message').val('');
+        }
+
       });
 
     });

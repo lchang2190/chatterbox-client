@@ -4,7 +4,8 @@
 class App {
   constructor() {
     this.server = 'http://parse.sfm6.hackreactor.com/chatterbox/classes/messages';
-
+    this.rooms = [];
+    this.messages = {};
   }
 
   init() {
@@ -29,7 +30,7 @@ class App {
     });
   }
 
-  fetch() {
+  fetch(roomname = 'default') {
     $.ajax({
       context: this,
       // This is the url you should use to communicate with the parse API server.
@@ -38,11 +39,16 @@ class App {
       //data: JSON.stringify(message),
       contentType: 'application/json',
       success: function (data) {
+        console.log(data);
         var allmessage = data.results;
-        for (var i = 0; i < 10; i++) {
-          this.renderMessage(allmessage[i]);
+        for (var i = 0; i < allmessage.length; i++) {
+          var messageObject = allmessage[i];
+
+          if (roomname === 'default' || messageObject.roomname === roomname) {
+            this.renderMessage(allmessage[i]);
+          }
+          this.renderRoomnames(messageObject.roomname);
         }
-        
       },
       error: function (data) {
         // See: https://developer.mozilla.org/en-US/docs/Web/API/console.error
@@ -51,22 +57,33 @@ class App {
     });
   }
 
+  escapeHtml(string) {
+    var div = document.createElement('div');
+    div.appendChild(document.createTextNode(string));
+    return div.innerHTML;
+  }
+
   clearMessages() {
     $('#chats').empty();
   }
+
+  renderRoomnames(roomname) {
+    var roomName = this.escapeHtml(roomname);
+    if (this.rooms.indexOf(roomName) === -1) {
+      this.rooms.push(roomName);
+      var roomSpan = '<option value ="' + roomName + '">' + roomName + '</option>';
+      $('#roomList').append(roomSpan);
+    }
+  }
   
   renderMessage(message) {
-    var user = '<p class="username">' + message.username + '</p>';
-    var add = '<span>' + user + '<p>' + message.text + '</p></span>';
+    var user = '<span class="username">' + this.escapeHtml(message.username) + '</span>';
+    var add = '<p>' + user + '<span>: ' + this.escapeHtml(message.text) + '</span></p>';
     $('#chats').append(add);
-    $('#main').append(user);
-    // add any new room-names to our roomname array
-    var roomName = message.roomname;
-    var roomSpan = '<option value ="' + roomName + '">' + roomName + '</option>';
+    // $('#main').append(user);
 
-    // CHECK IF NODE EXISTS, only add if not! TODO: 
-    $('#roomList').append(roomSpan);
-    
+    // add any new room-names to our roomname array
+    // debugger;  
 
         
     $('#main').on('click', '.username', function(event) {
@@ -82,8 +99,14 @@ class App {
     console.log('click registered!');
   }
   
-  handleSubmit() {
-    console.log('form submission was hit!');
+  handleSubmit(username, text, roomname) {
+    // build our message object
+    var message = {
+      username: username,
+      text: text,
+      roomname: roomname
+    };
+    this.send(message);
   }
 }
 
