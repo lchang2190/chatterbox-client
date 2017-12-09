@@ -4,7 +4,7 @@ class App {
   constructor() {
     this.server = 'http://parse.sfm6.hackreactor.com/chatterbox/classes/messages';
     this.rooms = [];
-    this.latestPull;
+    this.newestRenderedMessageTimeStamp;
   }
 
   init() {
@@ -29,7 +29,7 @@ class App {
     });
   }
 
-  fetch(roomname = 'default') {
+  fetch(roomname = null) {
     var dataRestrictions = {
       'limit': 100, 
       'order': '-createdAt',
@@ -49,16 +49,32 @@ class App {
       data: dataRestrictions,
       contentType: 'application/json',
       success: function (data) {
-        this.latestPull = data.results[0].createdAt;
         var allmessage = data.results;
-        for (var i = 0; i < allmessage.length; i++) {
+        // if the user has not selected a room, default into the room of the first message
+        if (!roomname) {
+          roomname = allmessage[0].roomname;
+          $("#roomList").val(roomname);
+        }
+
+        for (var i = 0; i < allmessage.length; i++) {        
           var messageObject = allmessage[i];
 
-          if (roomname === 'default' || messageObject.roomname === roomname) {
+          if (messageObject.roomname === roomname) {
+            console.log(roomname);
             this.renderMessage(allmessage[i]);
+
+            // Check to see if the messages are newer than our last Rendered
+            // if (allmessage[i].createdAt > this.newestRenderedMessageTimeStamp) {
+            // if (!this.newestRenderedMessageTimeStamp || allmessage[i].createdAt < this.newestRenderedMessageTimeStamp) {
+              
+            // }
+  
+            // console.log(allmessage[i].createdAt, this.newestRenderedMessageTimeStamp, allmessage[i].createdAt > this.newestRenderedMessageTimeStamp)
+            // }    
           }
           this.renderRoomnames(messageObject.roomname);
         }
+        this.newestRenderedMessageTimeStamp = data.results[0].createdAt;
       },
       error: function (data) {
         // See: https://developer.mozilla.org/en-US/docs/Web/API/console.error
@@ -89,15 +105,17 @@ class App {
   }
   
   renderMessage(message) {
-    var user = '<span class="username">' + this.escapeHtml(message.username) + '</span>';
-    var add = '<p>' + user + '<span>: ' + this.escapeHtml(message.text) + '</span></p>';
-    $('#chats').append(add);
-    // $('#main').append(user);
+    var username = this.escapeHtml(message.username);
+    var user = '<span class="username">' + username + '</span>';
+    var message = '<span>: ' + this.escapeHtml(message.text) + '</span>';
+    var completeMessage = '<p class="fullchat" data-author="' + username + '">' + user + message + '</p>';
 
-        
-    $('#main').on('click', '.username', function(event) {
-      app.handleUsernameClick();   
-    });
+
+    $('#chats').append($(completeMessage).click(
+      function() {
+        app.handleUsernameClick(username);  
+      } 
+    ));
   }
   
   renderRoom(roomName) {
@@ -105,7 +123,8 @@ class App {
   }
 
   handleUsernameClick(username) {
-    console.log('click registered!');
+    $('#chats').find('[data-author=' + username + ']').toggleClass('bolded');
+    console.log('click registered! updated string');
   }
   
   handleSubmit(username, text, roomname) {
