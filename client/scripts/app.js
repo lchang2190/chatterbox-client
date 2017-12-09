@@ -1,5 +1,4 @@
 // YOUR CODE HERE:
-//
 
 class App {
   constructor() {
@@ -34,7 +33,7 @@ class App {
     $.ajax({
       context: this,
       // This is the url you should use to communicate with the parse API server.
-      url: this.server,
+      url: 'http://parse.sfm6.hackreactor.com/chatterbox/classes/messages?order=-createdAt',
       type: 'GET',
       //data: JSON.stringify(message),
       contentType: 'application/json',
@@ -55,6 +54,7 @@ class App {
         console.error('chatterbox: Failed to send message', data);
       }
     });
+   
   }
 
   escapeHtml(string) {
@@ -69,6 +69,7 @@ class App {
 
   renderRoomnames(roomname) {
     var roomName = this.escapeHtml(roomname);
+    // console.log(roomName, roomName2);
     if (this.rooms.indexOf(roomName) === -1) {
       this.rooms.push(roomName);
       var roomSpan = '<option value ="' + roomName + '">' + roomName + '</option>';
