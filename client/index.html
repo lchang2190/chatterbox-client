@@ -7,16 +7,17 @@
 
     <!-- dependencies -->
     <script src="bower_components/jquery/dist/jquery.js"></script>
+    <script src="bower_components/underscore/underscore.js"></script>
     <script>
       // YOU DO NOT NEED TO EDIT THIS CODE
-      if (!/(&|\?)username=/.test(window.location.search)) {
-        var newSearch = window.location.search;
-        if (newSearch !== '' & newSearch !== '?') {
-          newSearch += '&';
-        }
-        newSearch += 'username=' + (prompt('What is your name?') || 'anonymous');
-        window.location.search = newSearch;
-      }
+      // if (!/(&|\?)username=/.test(window.location.search)) {
+      //   var newSearch = window.location.search;
+      //   if (newSearch !== '' & newSearch !== '?') {
+      //     newSearch += '&';
+      //   }
+      //   newSearch += 'username=' + (prompt('What is your name?') || 'anonymous');
+      //   window.location.search = newSearch;
+      // }
     </script>
     <!-- your scripts -->
     <script src="env/config.js"></script>
@@ -28,5 +29,25 @@
       <!-- Your HTML goes here! -->
     </div>
     <div id="chats"></div>
+    <select id="roomList"></select>
+    <form name='chatMessageForm'>
+      <input type="text" id='message'>
+      <input type="button" id='send' class='submit' value="chat">
+    </form>
   </body>
+  <script>
+    $(document).ready(function() {
+      app.init();
+      app.fetch();
+      
+      // Handle user submission of messages
+      $("#send").click(function() {
+        // debugger;
+        var clientMessage = $('#message').val();
+        app.handleSubmit();
+        $('#message').val('');
+      });
+
+    });
+  </script>
 </html>
