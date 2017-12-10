@@ -4,7 +4,7 @@ class App {
   constructor() {
     this.server = 'http://parse.sfm6.hackreactor.com/chatterbox/classes/messages';
     this.rooms = [];
-    this.newestRenderedMessageTimeStamp;
+    this.mostRecentTimestamp = null;
   }
 
   init() {
@@ -20,7 +20,7 @@ class App {
       data: JSON.stringify(message),
       contentType: 'application/json',
       success: function (data) {
-        console.log('chatterbox: Message sent');
+        console.log('chatterbox: Message sent', message);
       },
       error: function (data) {
         // See: https://developer.mozilla.org/en-US/docs/Web/API/console.error
@@ -30,56 +30,78 @@ class App {
   }
 
   fetch(roomname = null) {
-    var dataRestrictions = {
+    var dataObject = {
       'limit': 100, 
-      'order': '-createdAt',
+      'order': '-createdAt'
     };
 
-    var data2 = {
-      'limit': 100, 
-      'order': '-createdAt',
-      'where': {"createdAt":{"$gte":{"__type":"Date","iso":"2017-12-09T05:31:15.126Z"}}}
+    // var data2 = {
+    //   'limit': 100, 
+    //   'order': '-createdAt',
+    //   'where': {
+    //     'createdAt':{
+    //       "$gte":
+    //         {
+    //         "__type":"Date",
+    //         "iso":"2017-12-09T05:31:15.126Z"
+    //       }
+    //     }
+    //   }
+    // }
+        debugger;
+    if (roomname || this.mostRecentTimestamp) {
+      dataObject['where'] = {};
     }
+    
+    if (roomname) {
+      dataObject['where']['roomname'] = roomname;
+    }
+    // var dataObject = {
+    //   'limit': 100, 
+    //   'order': '-createdAt',
+    //   'where': {
+    //     roomname: 'lobby', 
+    //     createdAt: {}
+    //   }
+    // };
+
+    if (this.mostRecentTimestamp) {
+      dataObject['where']['createdAt'] = {
+        '$gte': {
+          '__type': 'Date',
+          'iso': this.mostRecentTimestamp}
+      };
+    }
+
     
     $.ajax({
       context: this,
       // This is the url you should use to communicate with the parse API server.
       url: 'http://parse.sfm6.hackreactor.com/chatterbox/classes/messages',
       type: 'GET',
-      data: dataRestrictions,
+      data: dataObject,
       contentType: 'application/json',
-      success: function (data) {
-        var allmessage = data.results;
-        // if the user has not selected a room, default into the room of the first message
-        // this.newestRenderedMessageTimeStamp = allmessage[0].createdAt;
-        console.log('fetch initated', allmessage.length); 
+      success: function (data) { 
+
+        this.mostRecentTimestamp = data.results && data.results[0] && data.results[0].createdAt;
+
+        var allmessage = data.results;        
         for (var i = 0; i < allmessage.length; i++) {  
-          if (!roomname && allmessage[i].roomname) {
-            roomname = this.escapeHtml(allmessage[i].roomname);
-            $("#roomList").val(roomname);            
+          // if the message has no username and no text, do not render
+          if (allmessage[i].username || allmessage[i].text) {
+            var escapedRoomname = this.escapeHtml(allmessage[i].roomname);
+            this.renderRoomnames(escapedRoomname);
+            // Within a room, restrict to latest 10 messages:
+
+            if (roomname && (i < 10)) {
+              this.renderMessage(allmessage[i]);    
+            }
           }
-
-          var messageObject = allmessage[i];
-
-          if (messageObject.roomname === roomname) {
-            console.log(roomname);
-            this.renderMessage(allmessage[i]);
-
-            // Check to see if the messages are newer than our last Rendered
-            // if (allmessage[i].createdAt > this.newestRenderedMessageTimeStamp) {
-            // if (!this.newestRenderedMessageTimeStamp || allmessage[i].createdAt < this.newestRenderedMessageTimeStamp) {
-              
-            // }
-  
-            // console.log(allmessage[i].createdAt, this.newestRenderedMessageTimeStamp, allmessage[i].createdAt > this.newestRenderedMessageTimeStamp)
-            // }    
-          }
-          this.renderRoomnames(messageObject.roomname);
+          
         }
-        this.newestRenderedMessageTimeStamp = data.results[0].createdAt;
+        
       },
       error: function (data) {
-        // See: https://developer.mozilla.org/en-US/docs/Web/API/console.error
         console.error('chatterbox: Failed to send message', data);
       }
     });
@@ -97,11 +119,10 @@ class App {
   }
 
   renderRoomnames(roomname) {
-    var roomName = this.escapeHtml(roomname);
-    // console.log(roomName, roomName2);
-    if (this.rooms.indexOf(roomName) === -1) {
-      this.rooms.push(roomName);
-      var roomSpan = '<option value ="' + roomName + '">' + roomName + '</option>';
+    // var roomName = this.escapeHtml(roomname);
+    if (this.rooms.indexOf(roomname) === -1) {
+      this.rooms.push(roomname);
+      var roomSpan = '<option value ="' + roomname + '">' + roomname + '</option>';
       $('#roomList').append(roomSpan);
     }
   }
@@ -112,8 +133,7 @@ class App {
     var message = '<span>: ' + this.escapeHtml(message.text) + '</span>';
     var completeMessage = '<p class="fullchat" data-author="' + username + '">' + user + message + '</p>';
 
-
-    $('#chats').append($(completeMessage).click(
+    $('#chats').prepend($(completeMessage).click(
       function() {
         app.handleUsernameClick(username);  
       } 
@@ -126,7 +146,7 @@ class App {
 
   handleUsernameClick(username) {
     $('#chats').find('[data-author=' + username + ']').toggleClass('bolded');
-    console.log('click registered! updated string');
+    /// console.log('click registered! updated string');
   }
   
   handleSubmit(username, text, roomname) {
@@ -139,8 +159,10 @@ class App {
     this.send(message);
   }
 
-  refresh(roomname) {
-    app.clearMessages();
+  refresh() {
+    //app.clearMessages();
+    var roomname = $("#roomList").find(":selected").text();
+    console.log('data refreshed');
     app.fetch(roomname);
   }
 }
