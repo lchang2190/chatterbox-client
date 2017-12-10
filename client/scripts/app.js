@@ -48,26 +48,18 @@ class App {
     //     }
     //   }
     // }
-        debugger;
+    debugger;
     if (roomname || this.mostRecentTimestamp) {
       dataObject['where'] = {};
     }
     
-    if (roomname) {
+    if (roomname && roomname !== 'default') {
       dataObject['where']['roomname'] = roomname;
     }
-    // var dataObject = {
-    //   'limit': 100, 
-    //   'order': '-createdAt',
-    //   'where': {
-    //     roomname: 'lobby', 
-    //     createdAt: {}
-    //   }
-    // };
 
     if (this.mostRecentTimestamp) {
       dataObject['where']['createdAt'] = {
-        '$gte': {
+        '$gt': {
           '__type': 'Date',
           'iso': this.mostRecentTimestamp}
       };
@@ -82,7 +74,7 @@ class App {
       data: dataObject,
       contentType: 'application/json',
       success: function (data) { 
-
+        debugger;
         this.mostRecentTimestamp = data.results && data.results[0] && data.results[0].createdAt;
 
         var allmessage = data.results;        
@@ -157,12 +149,13 @@ class App {
       roomname: roomname
     };
     this.send(message);
+    this.fetch(roomname);
   }
 
   refresh() {
     //app.clearMessages();
-    var roomname = $("#roomList").find(":selected").text();
-    console.log('data refreshed');
+    var roomname = $("#roomList").find(":selected").val();
+  //   console.log('data refreshed');
     app.fetch(roomname);
   }
 }
