@@ -125,7 +125,7 @@ class App {
     var message = '<span>: ' + this.escapeHtml(message.text) + '</span>';
     var completeMessage = '<p class="fullchat" data-author="' + username + '">' + user + message + '</p>';
 
-    $('#chats').prepend($(completeMessage).click(
+    $('#chats').append($(completeMessage).click(
       function() {
         app.handleUsernameClick(username);  
       } 
